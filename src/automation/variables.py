@@ -36,6 +36,8 @@ class GeneratorVariable:
         """
         self._factory = factory
         self._gen: Optional[Iterator] = None
+        self._peeked: bool = False
+        self._peeked_value: Any = None
 
     # ------------------------------------------------------------------
     # Core interface
@@ -48,6 +50,9 @@ class GeneratorVariable:
 
     def next(self, default: Any = None) -> Any:
         """Return the next value, or *default* when the generator is exhausted."""
+        if self._peeked:
+            self._peeked = False
+            return self._peeked_value
         try:
             return next(self._ensure_gen())
         except StopIteration:
@@ -56,21 +61,24 @@ class GeneratorVariable:
     def reset(self) -> "GeneratorVariable":
         """Restart the generator from the beginning."""
         self._gen = self._factory()
+        self._peeked = False
+        self._peeked_value = None
         return self
 
     def peek(self) -> Any:
         """
         Return the next value without advancing the generator.
 
-        Uses ``itertools.chain`` internally to re-inject the peeked value.
-        Returns ``None`` when exhausted.
+        Consecutive calls to ``peek()`` return the same value until
+        ``next()`` or iteration consumes it.  Returns ``None`` when
+        the generator is exhausted.
         """
-        import itertools
-
+        if self._peeked:
+            return self._peeked_value
         try:
-            value = next(self._ensure_gen())
-            self._gen = itertools.chain([value], self._gen)  # type: ignore[arg-type]
-            return value
+            self._peeked_value = next(self._ensure_gen())
+            self._peeked = True
+            return self._peeked_value
         except StopIteration:
             return None
 
@@ -168,9 +176,12 @@ class GeneratorVariable:
     # ------------------------------------------------------------------
 
     def __iter__(self) -> Iterator:
-        return self._ensure_gen()
+        return self
 
     def __next__(self) -> Any:
+        if self._peeked:
+            self._peeked = False
+            return self._peeked_value
         return next(self._ensure_gen())
 
     def __repr__(self) -> str:

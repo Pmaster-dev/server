@@ -24,6 +24,7 @@ Architecture::
 
 from __future__ import annotations
 
+import logging
 import traceback
 import uuid
 from dataclasses import dataclass, field
@@ -39,6 +40,8 @@ from .components import (
     FunctionComponent,
 )
 from .variables import GeneratorVariable, VariableRegistry
+
+logger = logging.getLogger(__name__)
 
 
 # ---------------------------------------------------------------------------
@@ -282,7 +285,7 @@ class AutomationEngine:
             try:
                 hook(result, event)
             except Exception:
-                pass
+                logger.exception("before_run hook %r raised an exception", hook)
 
         result.started_at = datetime.now()
         result.status = RunStatus.RUNNING
@@ -329,7 +332,7 @@ class AutomationEngine:
             try:
                 hook(result)
             except Exception:
-                pass
+                logger.exception("after_run hook %r raised an exception", hook)
 
         return result
 

@@ -263,7 +263,7 @@ class ComponentRegistry:
 
         Each step's ``result`` is forwarded as the ``payload`` of the next
         step's :class:`ComponentInput`.  Execution stops on the first
-        failure unless *stop_on_error* is ``True``.
+        failure encountered.
 
         Args:
             steps: Ordered list of registered component names.
@@ -272,6 +272,7 @@ class ComponentRegistry:
 
         Returns:
             List of :class:`ComponentOutput` objects, one per step executed.
+            The list may be shorter than *steps* if a failure occurred early.
         """
         outputs: List[ComponentOutput] = []
         payload = initial_payload
