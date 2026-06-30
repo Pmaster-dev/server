@@ -10,6 +10,7 @@ framework.
 from __future__ import annotations
 
 import inspect
+import traceback
 from abc import ABC, abstractmethod
 from dataclasses import dataclass, field
 from typing import Any, Callable, Dict, List, Optional, Type
@@ -131,8 +132,8 @@ class FunctionComponent(Component):
         try:
             result = self._fn(input_)
             return self._ok(result)
-        except Exception as exc:
-            return self._err(str(exc))
+        except Exception:
+            return self._err(traceback.format_exc())
 
 
 # ---------------------------------------------------------------------------
@@ -174,6 +175,9 @@ class ComponentRegistry:
 
         Calls :meth:`Component.setup` and returns *self* for chaining.
         """
+        existing = self._components.pop(name, None)
+        if existing is not None:
+            existing.teardown()
         component.name = component.name or name
         component.setup()
         self._components[name] = component
@@ -250,7 +254,15 @@ class ComponentRegistry:
                 error=f"Validation failed: {reason}",
             )
 
-        return component.execute(input_)
+        try:
+            return component.execute(input_)
+        except Exception:
+            return ComponentOutput(
+                component=name,
+                result=None,
+                success=False,
+                error=traceback.format_exc(),
+            )
 
     def run_pipeline(
         self,

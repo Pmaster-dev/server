@@ -345,9 +345,7 @@ class AutomationEngine:
         """
         snapshot: Dict[str, Any] = {}
         for name in names:
-            var = self.variables.get(name)
-            if var is not None:
-                snapshot[name] = var.peek()
+            snapshot[name] = self.variables.require(name).peek()
         return snapshot
 
     # ------------------------------------------------------------------

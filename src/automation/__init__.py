@@ -3,9 +3,9 @@ Serverless Python automation with pluggable components and generator variables.
 
 Quick-start::
 
-    from src.automation import AutomationEngine, AutomationDefinition, TriggerEvent
-    from src.automation import Component, ComponentInput, ComponentRegistry
-    from src.automation import GeneratorVariable, VariableRegistry
+    from automation import AutomationEngine, AutomationDefinition, TriggerEvent
+    from automation import Component, ComponentInput, ComponentRegistry
+    from automation import GeneratorVariable, VariableRegistry
 
     engine = AutomationEngine()
 
