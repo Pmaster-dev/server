@@ -82,15 +82,15 @@ class GeneratorVariable:
         except StopIteration:
             return None
 
-def collect(self) -> list:
-    """Drain all remaining values into a list."""
-    values: list[Any] = []
-    if self._peeked:
-        values.append(self._peeked_value)
-        self._peeked = False
-        self._peeked_value = None
-    values.extend(list(self._ensure_gen()))
-    return values
+    def collect(self) -> list:
+        """Drain all remaining values into a list."""
+        values: list[Any] = []
+        if self._peeked:
+            values.append(self._peeked_value)
+            self._peeked = False
+            self._peeked_value = None
+        values.extend(list(self._ensure_gen()))
+        return values
 
     # ------------------------------------------------------------------
     # Composition helpers
