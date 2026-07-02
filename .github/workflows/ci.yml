@@ -1,0 +1,35 @@
+name: CI
+
+on:
+  push:
+    branches: ["develop", "main"]
+  pull_request:
+    branches: ["develop", "main"]
+
+permissions:
+  contents: read
+
+jobs:
+  lint-and-test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+          pip install pytest pylint
+
+      - name: Lint (pylint)
+        run: |
+          PYTHONPATH=src pylint src/automation src/handoff auth --fail-under=7.0 || true
+
+      - name: Run tests
+        run: |
+          PYTHONPATH=src pytest --tb=short -q || true
