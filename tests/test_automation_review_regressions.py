@@ -32,8 +32,9 @@ def test_register_replaces_component_with_teardown():
 
     registry.register("step", _LifecycleComponent(events, "old"))
     registry.register("step", _LifecycleComponent(events, "new"))
+    assert registry.deregister("step") is True
 
-    assert events == ["old-setup", "old-teardown", "new-setup"]
+    assert events == ["old-setup", "old-teardown", "new-setup", "new-teardown"]
 
 
 def test_function_component_returns_traceback_on_failure():
@@ -63,8 +64,10 @@ def test_missing_variables_fail_run_instead_of_being_silently_dropped():
         )
     )
 
-    [result] = engine.trigger_type("demo", payload="hello")
+    results = engine.trigger_type("demo", payload="hello")
 
+    assert len(results) == 1
+    result = results[0]
     assert result.status is RunStatus.FAILED
     assert result.error is not None
     assert "Variable 'missing' not found in registry" in result.error
