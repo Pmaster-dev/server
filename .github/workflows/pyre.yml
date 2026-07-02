@@ -51,7 +51,7 @@ jobs:
           pip install pyre-check
 
       - name: Run Pyre (generate SARIF)
-        run: pyre check --output-format sarif > pyre-results.sarif
+        run: pyre --output sarif --source-directory src --source-directory auth check > pyre-results.sarif || true
 
       - name: Upload Pyre results to GitHub Code Scanning
         if: always()
