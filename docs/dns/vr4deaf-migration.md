@@ -1,9 +1,19 @@
-# vr4deaf.org — DNS Migration Runbook (Google → Route53)
+# vr4deaf.org — DNS Migration Runbook (Cloudflare → Route53)
 
 ## Overview
 
-This runbook covers the safe migration of `vr4deaf.org` from Google-hosted DNS to AWS Route53.  
-The Terraform module lives at `infra/dns/vr4deaf/`.
+`vr4deaf.org` was previously managed by **Cloudflare DNS** with **Vercel** as the app host.  
+This runbook covers the migration to **AWS Route53** as the new DNS authority, keeping Vercel as the origin.
+
+- **Past (current):** Cloudflare manages DNS → Vercel hosts app  
+- **New (target):** AWS Route53 manages DNS → Vercel hosts app  
+
+Terraform modules:
+
+| State | Module path |
+|---|---|
+| Past (Cloudflare) | `infra/cloudflare/vr4deaf/` |
+| New (Route53) | `infra/dns/vr4deaf/` |
 
 ---
 
@@ -13,84 +23,62 @@ The Terraform module lives at `infra/dns/vr4deaf/`.
 |---|---|
 | AWS credentials configured (`aws configure` or IAM role) | ☐ |
 | Terraform ≥ 1.5 installed | ☐ |
-| Access to Google Domains / registrar for `vr4deaf.org` | ☐ |
-| Current DNS records exported (see Phase 1) | ☐ |
+| Access to Cloudflare dashboard for `vr4deaf.org` | ☐ |
+| Access to domain registrar (to update nameservers) | ☐ |
+| Current DNS records exported from Cloudflare (Phase 1) | ☐ |
 
 ---
 
-## Phase 1 — Export current DNS from Google
+## Phase 1 — Export current DNS from Cloudflare
 
-1. Open [Google Domains](https://domains.google.com) → select `vr4deaf.org` → **DNS**.
-2. Copy every record into the table below before touching anything.
+1. Cloudflare dashboard → `vr4deaf.org` → **DNS → Records**.
+2. Click **Export** (downloads a BIND zone file) or copy each record manually.
+3. Fill in the table below before touching anything.
 
 ### Current DNS records (fill in before migration)
 
-| Subdomain | Type | TTL | Value(s) |
-|---|---|---|---|
-| `@` (root) | A | | |
-| `@` (root) | AAAA | | |
-| `www` | CNAME | | |
-| `@` | MX | | |
-| `@` | TXT (SPF) | | |
-| `@` | TXT (site-verify) | | |
-| `_dmarc` | TXT | | |
-| *(add rows)* | | | |
+| Subdomain | Type | TTL | Value(s) | Proxied? |
+|---|---|---|---|---|
+| `@` (root) | A | | `76.76.21.21` | ☐ |
+| `www` | CNAME | | `cname.vercel-dns.com` | ☐ |
+| `@` | MX | | | No |
+| `@` | TXT (SPF) | | | No |
+| `@` | TXT (site-verify) | | | No |
+| `_dmarc` | TXT | | | No |
+| *(add rows)* | | | | |
 
 ---
 
-## Phase 2 — Populate Terraform variables
-
-Edit `infra/dns/vr4deaf/provider.tf` (the commented `tfvars` block at the bottom) or create a
-`terraform.tfvars` file in the same directory using the records captured above.
-
-Key variables to set:
-
-| Variable | Description |
-|---|---|
-| `root_ipv4_addresses` | IP(s) for the root A record |
-| `root_ipv6_addresses` | IP(s) for AAAA (omit if none) |
-| `www_target` | CNAME target for `www` |
-| `mx_records` | MX records with priority prefix |
-| `root_txt_records` | SPF, site-verification, etc. |
-| `subdomain_remaps` | List of subdomain records (see below) |
-| `ttl` | Set to `60` before cutover |
-
----
-
-## Phase 3 — Subdomain remap plan
-
-Define each subdomain's destination before the cutover.
-
-| Subdomain | Current target | New target | Action |
-|---|---|---|---|
-| `www` | *(Google)* | | `CNAME → <new host>` |
-| `app` | | | |
-| `api` | | | |
-| `mail` | | | |
-| *(add rows)* | | | |
-
-**Action key:**
-- `keep` — same target, just re-create in Route53
-- `remap` — new target endpoint
-- `redirect` — HTTP 301 (needs redirect infrastructure)
-- `decommission` — do not create in Route53
-
----
-
-## Phase 4 — Create Route53 hosted zone (dry run first)
+## Phase 2 — Populate Route53 Terraform variables
 
 ```bash
 cd infra/dns/vr4deaf
-
-# Preview changes (no writes)
-terraform init
-terraform plan
-
-# Apply – creates the hosted zone and all records
-terraform apply
+cp provider.tf terraform.tfvars   # use the commented example block as a starter
 ```
 
-After `apply`, note the four **nameservers** from the Terraform output:
+Key variables (defaults already set for Vercel):
+
+| Variable | Default | Notes |
+|---|---|---|
+| `root_ipv4_addresses` | `["76.76.21.21"]` | Vercel apex IP – no change needed |
+| `www_target` | `"cname.vercel-dns.com"` | Vercel CNAME – no change needed |
+| `mx_records` | `[]` | Copy from Cloudflare export |
+| `root_txt_records` | `[]` | Copy SPF/DKIM/verification from export |
+| `subdomain_remaps` | `[]` | Add any extra subdomains |
+| `ttl` | `300` | Set to `60` during cutover window |
+
+---
+
+## Phase 3 — Create Route53 hosted zone (dry run first)
+
+```bash
+cd infra/dns/vr4deaf
+terraform init
+terraform plan    # preview – no writes yet
+terraform apply   # creates hosted zone + all records
+```
+
+After apply, note the four **Route53 nameservers** from the output:
 
 ```
 nameservers = [
@@ -105,29 +93,26 @@ nameservers = [
 
 ---
 
-## Phase 5 — Lower TTLs at Google DNS
+## Phase 4 — Lower TTLs in Cloudflare
 
-In Google Domains, change all active record TTLs to **60 seconds**.  
-Wait one full TTL cycle (1 minute) before proceeding.
+In Cloudflare DNS, change all active record TTLs to **60 seconds**.  
+Wait 1 minute (one TTL cycle) before cutting over.
 
 ---
 
-## Phase 6 — Switch nameservers at the registrar
+## Phase 5 — Switch nameservers at the registrar
 
 1. Log in to the domain registrar managing `vr4deaf.org`.
-2. Replace the existing Google nameservers with the four Route53 NS values from Phase 4.
-3. Save. Propagation typically completes within 5–30 minutes (up to 48 h worst case).
+2. Replace the Cloudflare nameservers with the four Route53 NS values from Phase 3.
+3. Save. Propagation typically completes in 5–30 minutes (up to 48 h worst case).
 
 ---
 
-## Phase 7 — Validation checklist
-
-Run these checks after propagation:
+## Phase 6 — Validate after propagation
 
 ```bash
 # Root domain
 dig @8.8.8.8 vr4deaf.org A
-dig @8.8.8.8 vr4deaf.org AAAA
 
 # www
 dig @8.8.8.8 www.vr4deaf.org CNAME
@@ -138,33 +123,49 @@ dig @8.8.8.8 vr4deaf.org TXT
 
 # Each subdomain
 dig @8.8.8.8 app.vr4deaf.org
-dig @8.8.8.8 api.vr4deaf.org
 ```
 
 | Check | Expected | Status |
 |---|---|---|
-| Root A resolves | Correct IP | ☐ |
-| www resolves | Correct CNAME/IP | ☐ |
+| Root A → `76.76.21.21` | Vercel IP | ☐ |
+| www CNAME → `cname.vercel-dns.com` | Vercel CNAME | ☐ |
 | MX records present | Priority + hostname | ☐ |
-| SPF TXT present | `v=spf1 ...` | ☐ |
-| Site verification TXT | Token visible | ☐ |
+| SPF TXT present | `v=spf1 …` | ☐ |
 | SSL cert valid (HTTPS) | No browser warning | ☐ |
 | Email send/receive | Test round-trip | ☐ |
-| Each subdomain resolves | Correct target | ☐ |
+| Vercel project domain shows "Valid Configuration" | Green in Vercel | ☐ |
+| Each subdomain resolves correctly | Correct target | ☐ |
 
 ---
 
-## Phase 8 — Clean up Google DNS
+## Phase 7 — Clean up Cloudflare
 
-Only after **all** checks in Phase 7 pass:
+Only after **all** Phase 6 checks pass:
 
-1. Remove the custom DNS records from Google Domains.
-2. Optionally transfer domain registration to AWS Route53 (separate process).
-3. Raise `ttl` in `terraform.tfvars` back to `300` and run `terraform apply`.
+1. Remove the `vr4deaf.org` zone from Cloudflare (or leave it inactive).
+2. The `infra/cloudflare/vr4deaf/` Terraform module is now historical reference — run `terraform destroy` inside it to clean up any managed Cloudflare resources.
+3. Raise `ttl` in Route53 `terraform.tfvars` back to `300` and run `terraform apply`.
+
+---
+
+## Subdomain remap reference
+
+Add subdomains to `subdomain_remaps` in `infra/dns/vr4deaf/terraform.tfvars`:
+
+```hcl
+subdomain_remaps = [
+  # Vercel-hosted sub-apps
+  { name = "app",  type = "CNAME", records = ["cname.vercel-dns.com."] },
+  # Direct server
+  { name = "api",  type = "A",     records = ["<api-server-ip>"]       },
+  # Mail passthrough (must never be CNAME)
+  { name = "mail", type = "CNAME", records = ["ghs.googlemail.com."]   },
+]
+```
 
 ---
 
 ## Rollback
 
-If something breaks during cutover, revert the registrar nameservers back to the Google NS values.  
-Propagation to the old DNS will complete within the 60-second TTL set in Phase 5.
+Revert the registrar nameservers back to the Cloudflare NS values.  
+Cloudflare DNS will resume serving within the 60-second TTL set in Phase 4.

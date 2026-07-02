@@ -19,7 +19,7 @@ variable "ttl" {
 variable "root_ipv4_addresses" {
   description = "IPv4 addresses for the root A record."
   type        = list(string)
-  default     = []
+  default     = ["76.76.21.21"]
 }
 
 variable "root_ipv6_addresses" {
@@ -29,9 +29,9 @@ variable "root_ipv6_addresses" {
 }
 
 variable "www_target" {
-  description = "CNAME target for www.vr4deaf.org (e.g. a load-balancer hostname or CDN endpoint)."
+  description = "CNAME target for www.vr4deaf.org. Vercel default: cname.vercel-dns.com"
   type        = string
-  default     = "vr4deaf.org"
+  default     = "cname.vercel-dns.com"
 }
 
 variable "mx_records" {

@@ -13,7 +13,7 @@ terraform {
 # ---------------------------------------------------------------------------
 resource "aws_route53_zone" "vr4deaf" {
   name    = var.domain
-  comment = "vr4deaf.org – migrated from Google-hosted DNS"
+  comment = "vr4deaf.org – migrated from Cloudflare-managed DNS"
 
   tags = merge(var.tags, {
     Domain = var.domain
@@ -21,7 +21,7 @@ resource "aws_route53_zone" "vr4deaf" {
 }
 
 # ---------------------------------------------------------------------------
-# Root A record  (replace values with real IP(s) from Google export)
+# Root A record – Vercel apex IP (default: 76.76.21.21). Override via var.root_ipv4_addresses.
 # ---------------------------------------------------------------------------
 resource "aws_route53_record" "root_a" {
   count   = length(var.root_ipv4_addresses) > 0 ? 1 : 0
