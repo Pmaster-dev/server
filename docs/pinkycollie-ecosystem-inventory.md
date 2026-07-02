@@ -60,10 +60,10 @@ Reference flow:
 
 ## Layer 6 — versioned artifacts
 
-- Machine-readable contracts: `Pmaster-dev/docs/openapi/*.yaml`
+- Machine-readable contracts: `docs/openapi/*.yaml`
 - Human-readable operational docs: `pinkflow/docs/`, `pinkflow/workflow-system/docs/`
 - Agent/system context: `pinkflow/context/agents.md`
-- Cross-org map (this file): `server/docs/pinkycollie-ecosystem-inventory.md`
+- Cross-org map (this file): `docs/pinkycollie-ecosystem-inventory.md`
 
 ## Priority sequence
 
