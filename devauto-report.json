@@ -1,0 +1,26 @@
+{
+  "generated_at": "2026-07-02T13:24:56.657232",
+  "repo": "/home/runner/work/server/server",
+  "platform": "linux",
+  "python": "3.12.3",
+  "bundle": {
+    "chunks": [],
+    "total_bytes": 0,
+    "total_kb": 0.0,
+    "budget_kb": 500,
+    "within_budget": true
+  },
+  "build_success": null,
+  "smoke_success": null,
+  "tasks": {
+    "os_support_matrix": true,
+    "bundle_budget_policy": true,
+    "vite_config": true,
+    "smoke_tests": true,
+    "ci_workflow": true,
+    "devauto_entrypoint": true
+  },
+  "risks": [
+    "No dist/assets found \u2013 run `npm run build` first"
+  ]
+}

@@ -1,0 +1,188 @@
+name: Headless Devauto – Build · Test · Report
+
+on:
+  push:
+    branches: ["develop", "main"]
+    paths:
+      - "src/**"
+      - "tests/**"
+      - "vite.config.js"
+      - "package.json"
+      - "scripts/**"
+      - ".github/workflows/headless-devauto.yml"
+  pull_request:
+    branches: ["develop", "main"]
+  workflow_dispatch:
+    inputs:
+      run_bsd:
+        description: "Include BSD compatibility lane"
+        type: boolean
+        default: false
+
+permissions:
+  contents: read
+  checks: write
+
+env:
+  NODE_ENV: production
+  PYTHONPATH: src
+
+jobs:
+  # ── 1. Vite production build ──────────────────────────────────────────────
+  build:
+    name: Vite Build (Linux)
+    runs-on: ubuntu-latest
+
+    outputs:
+      dist-artifact: ${{ steps.upload.outputs.artifact-id }}
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: "npm"
+
+      - name: Install Node dependencies
+        run: npm ci
+
+      - name: Vite production build
+        run: npm run build
+
+      - name: Check chunk size budget (500 kB)
+        run: |
+          python3 - <<'EOF'
+          import os, sys, pathlib
+          LIMIT = 500 * 1024  # 500 kB
+          oversized = []
+          dist = pathlib.Path("dist/assets")
+          if dist.exists():
+              for f in dist.glob("*.js"):
+                  sz = f.stat().st_size
+                  if sz > LIMIT:
+                      oversized.append(f"{f.name}: {sz/1024:.1f} kB")
+          if oversized:
+              print("FAIL – oversized chunks:")
+              for o in oversized:
+                  print(f"  {o}")
+              sys.exit(1)
+          print(f"OK – all chunks within {LIMIT/1024:.0f} kB budget")
+          EOF
+
+      - name: Upload dist artifact
+        id: upload
+        uses: actions/upload-artifact@v4
+        with:
+          name: dist-${{ github.sha }}
+          path: dist/
+          retention-days: 7
+
+  # ── 2. Headless webview smoke tests ───────────────────────────────────────
+  smoke-tests:
+    name: Playwright Smoke (Linux)
+    runs-on: ubuntu-latest
+    needs: build
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: "npm"
+
+      - name: Install Node dependencies
+        run: npm ci
+
+      - name: Download dist artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: dist-${{ github.sha }}
+          path: dist/
+
+      - name: Install Playwright browsers
+        run: npx playwright install --with-deps chromium firefox webkit
+
+      - name: Run headless smoke tests
+        run: npx playwright test
+        env:
+          CI: "true"
+
+      - name: Upload Playwright report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-report-${{ github.sha }}
+          path: playwright-report/
+          retention-days: 14
+
+  # ── 3. Python automation report ───────────────────────────────────────────
+  py-report:
+    name: Automation Report (Python)
+    runs-on: ubuntu-latest
+    needs: smoke-tests
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Download dist artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: dist-${{ github.sha }}
+          path: dist/
+
+      - name: Run devauto report
+        run: PYTHONPATH=src python3 -c "from automation.devauto import run_report; import json; print(json.dumps(run_report(), indent=2, default=str))"
+
+      - name: Upload report JSON
+        uses: actions/upload-artifact@v4
+        with:
+          name: devauto-report-${{ github.sha }}
+          path: devauto-report.json
+          retention-days: 30
+          if-no-files-found: ignore
+
+  # ── 4. BSD compatibility lane (optional) ──────────────────────────────────
+  bsd-compat:
+    name: BSD Compatibility Lane (FreeBSD)
+    runs-on: ubuntu-latest   # cross-compiled via act; replace with self-hosted BSD runner if available
+    needs: build
+    if: github.event_name == 'workflow_dispatch' && inputs.run_bsd == true
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: "npm"
+
+      - name: Install Node dependencies
+        run: npm ci
+
+      - name: Download dist artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: dist-${{ github.sha }}
+          path: dist/
+
+      - name: Install Playwright browsers (Chromium + Firefox only – no WebKit on BSD)
+        run: npx playwright install --with-deps chromium firefox
+
+      - name: Run headless smoke tests (BSD subset)
+        run: npx playwright test --project=chromium --project=firefox
+        env:
+          CI: "true"
