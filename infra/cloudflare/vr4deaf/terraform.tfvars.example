@@ -1,0 +1,40 @@
+# Copy this file to terraform.tfvars and fill in real values.
+# NEVER commit terraform.tfvars – it contains your zone ID.
+
+cloudflare_zone_id = "<paste-from-cloudflare-dashboard>"
+domain             = "vr4deaf.org"
+
+# --- Vercel targets (defaults match Vercel's current IPs – update if Vercel changes them)
+vercel_apex_ip      = "76.76.21.21"
+vercel_cname_target = "cname.vercel-dns.com"
+
+# --- Set false during Vercel domain verification, then flip to true
+proxied = false
+ttl     = 300
+
+# --- SSL: use "full" once Vercel cert is issued; "strict" if you control the origin cert
+ssl_mode         = "full"
+always_use_https = true
+min_tls_version  = "1.2"
+
+# --- Mail (Google Workspace example – replace with your provider)
+mx_records = [
+  "1 aspmx.l.google.com",
+  "5 alt1.aspmx.l.google.com",
+  "10 alt2.aspmx.l.google.com",
+  "10 alt3.aspmx.l.google.com",
+  "20 alt4.aspmx.l.google.com",
+]
+
+# --- TXT records
+root_txt_records = [
+  "v=spf1 include:_spf.google.com ~all",
+  # "google-site-verification=<token>",
+  # "v=DMARC1; p=none; rua=mailto:dmarc@vr4deaf.org",
+]
+
+# --- Extra subdomains (add as needed)
+subdomain_records = [
+  # { name = "app",  type = "CNAME", value = "cname.vercel-dns.com", proxied = false },
+  # { name = "api",  type = "A",     value = "203.0.113.20",          proxied = true  },
+]
