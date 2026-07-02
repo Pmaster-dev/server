@@ -246,7 +246,7 @@ devauto_engine.define(
         name="devauto.report-only",
         triggers=["devauto.report-only"],
         steps=["devauto.report"],
-        description="Generate report from existing dist/ artefacts",
+        description="Generate report from existing dist/ artifacts",
     )
 )
 

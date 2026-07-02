@@ -118,7 +118,7 @@ cmd_full() {
 }
 
 cmd_clean() {
-  log_info "Cleaning build artefacts…"
+  log_info "Cleaning build artifacts…"
   rm -rf "${DIST_DIR}" "${REPORT_DIR}" "${PYTHON_REPORT}"
   log_info "Clean complete"
 }
