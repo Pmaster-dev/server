@@ -18,7 +18,3 @@ markdown: kramdown
 kramdown:
   input: GFM
   syntax_highlighter: rouge
-
-# Exclude from build
-exclude:
-  - openapi/

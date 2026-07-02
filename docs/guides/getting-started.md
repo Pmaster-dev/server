@@ -86,18 +86,7 @@ engine.enable("greet_on_request")
 
 ## Auth utilities
 
-The `auth/utils.py` module provides JWT token creation/verification, bcrypt password hashing, and session helpers. It depends on Flask and `flask-jwt-extended`.
-
-```python
-from auth.utils import PasswordUtils, JWTUtils
-
-hashed = PasswordUtils.hash_password("supersecret")
-assert PasswordUtils.verify_password("supersecret", hashed)
-
-access_token, refresh_token = JWTUtils.create_tokens("user-123", "alice")
-payload = JWTUtils.decode_token(access_token)
-print(payload["username"])  # alice
-```
+The `auth/utils.py` module provides JWT token creation/verification, bcrypt password hashing, and session helpers. It depends on Flask, `flask-jwt-extended`, and an internal `cache_db` package that is not included in this repository, so importing it in a fresh clone will fail unless that package is available.
 
 > **Note**: Set the `JWT_SECRET_KEY` environment variable in production. The default value is insecure.
 
