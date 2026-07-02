@@ -1,0 +1,269 @@
+openapi: 3.1.0
+info:
+  title: Pmaster Automation API
+  version: 0.1.0
+  description: Shared automation contracts for the Pmaster-dev and pinkycollie ecosystem.
+servers:
+  - url: /
+    description: Base URL resolved by each deployment environment
+tags:
+  - name: Automation
+  - name: Runs
+paths:
+  /automation/events/trigger:
+    post:
+      tags: [Automation]
+      summary: Trigger automation runs for an event
+      operationId: triggerAutomationEvent
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TriggerEventRequest'
+      responses:
+        '200':
+          description: Trigger processed
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  runs:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/RunResult'
+                required: [runs]
+  /automation/definitions:
+    get:
+      tags: [Automation]
+      summary: List automation definitions
+      operationId: listAutomationDefinitions
+      responses:
+        '200':
+          description: Current definitions
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  definitions:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/AutomationDefinition'
+                required: [definitions]
+  /automation/definitions/{name}:
+    put:
+      tags: [Automation]
+      summary: Create or replace an automation definition
+      operationId: upsertAutomationDefinition
+      parameters:
+        - $ref: '#/components/parameters/AutomationName'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AutomationDefinition'
+      responses:
+        '200':
+          description: Definition stored
+    delete:
+      tags: [Automation]
+      summary: Remove an automation definition
+      operationId: deleteAutomationDefinition
+      parameters:
+        - $ref: '#/components/parameters/AutomationName'
+      responses:
+        '204':
+          description: Definition removed
+        '404':
+          description: Definition not found
+  /automation/definitions/{name}/enable:
+    post:
+      tags: [Automation]
+      summary: Enable a definition
+      operationId: enableAutomationDefinition
+      parameters:
+        - $ref: '#/components/parameters/AutomationName'
+      responses:
+        '204':
+          description: Definition enabled
+  /automation/definitions/{name}/disable:
+    post:
+      tags: [Automation]
+      summary: Disable a definition
+      operationId: disableAutomationDefinition
+      parameters:
+        - $ref: '#/components/parameters/AutomationName'
+      responses:
+        '204':
+          description: Definition disabled
+  /automation/runs:
+    get:
+      tags: [Runs]
+      summary: List run history
+      operationId: listAutomationRuns
+      parameters:
+        - name: limit
+          in: query
+          required: false
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 1000
+            default: 50
+      responses:
+        '200':
+          description: Run history entries
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  runs:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/RunResult'
+                required: [runs]
+  /automation/stats:
+    get:
+      tags: [Runs]
+      summary: Get aggregate automation stats
+      operationId: getAutomationStats
+      responses:
+        '200':
+          description: Aggregate counters by status
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AutomationStats'
+components:
+  parameters:
+    AutomationName:
+      name: name
+      in: path
+      required: true
+      schema:
+        type: string
+  schemas:
+    TriggerEventRequest:
+      type: object
+      properties:
+        event_type:
+          type: string
+        payload:
+          description: Event payload forwarded to automation steps.
+          type: object
+          additionalProperties: true
+          nullable: true
+        metadata:
+          type: object
+          additionalProperties: true
+          default: {}
+      required: [event_type]
+    AutomationDefinition:
+      type: object
+      properties:
+        name:
+          type: string
+        triggers:
+          type: array
+          items:
+            type: string
+        steps:
+          type: array
+          description: Ordered component names to execute in sequence.
+          items:
+            type: string
+        variables:
+          type: array
+          description: Variable names resolved from the runtime variable registry.
+          items:
+            type: string
+          default: []
+        description:
+          type: string
+          default: ''
+        enabled:
+          type: boolean
+          default: true
+      required: [name, triggers, steps]
+    RunStatus:
+      type: string
+      enum: [pending, running, success, failed, skipped]
+    ComponentOutput:
+      type: object
+      properties:
+        component:
+          type: string
+        success:
+          type: boolean
+        result:
+          nullable: true
+        error:
+          type: string
+          nullable: true
+        metadata:
+          type: object
+          additionalProperties: true
+          default: {}
+      required: [component, success]
+    RunResult:
+      type: object
+      properties:
+        run_id:
+          type: string
+        trigger:
+          type: object
+          properties:
+            event_type:
+              type: string
+            event_id:
+              type: string
+            timestamp:
+              type: string
+              format: date-time
+          required: [event_type, event_id, timestamp]
+        status:
+          $ref: '#/components/schemas/RunStatus'
+        outputs:
+          type: array
+          items:
+            $ref: '#/components/schemas/ComponentOutput'
+        started_at:
+          type: string
+          format: date-time
+          nullable: true
+        finished_at:
+          type: string
+          format: date-time
+          nullable: true
+        duration_ms:
+          type: number
+          nullable: true
+        error:
+          type: string
+          nullable: true
+      required: [run_id, trigger, status, outputs]
+    AutomationStats:
+      type: object
+      properties:
+        total_runs:
+          type: integer
+          minimum: 0
+        automations:
+          type: integer
+          minimum: 0
+        components:
+          type: integer
+          minimum: 0
+        variables:
+          type: integer
+          minimum: 0
+        by_status:
+          type: object
+          additionalProperties:
+            type: integer
+            minimum: 0
+      required: [total_runs, automations, components, variables, by_status]
