@@ -76,6 +76,7 @@ def test_missing_variables_fail_run_instead_of_being_silently_dropped():
 
 
 def test_quick_start_uses_package_imports():
-    assert automation_doc is not None
+    assert isinstance(automation_doc, str)
+    assert automation_doc.strip()
     assert "from automation import AutomationEngine" in automation_doc
     assert "from src.automation import" not in automation_doc
