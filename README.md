@@ -16,7 +16,7 @@ Infrastructure and automation layer for the **Pmaster-dev** + **pinkycollie** ec
 ## Quick start
 
 ```python
-from automation import AutomationEngine, AutomationDefinition, TriggerEvent
+from automation import AutomationEngine, AutomationDefinition
 
 engine = AutomationEngine()
 
