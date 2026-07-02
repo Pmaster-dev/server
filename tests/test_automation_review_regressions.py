@@ -11,7 +11,7 @@ def test_collect_includes_peeked_value():
     assert variable.collect() == [1, 2, 3]
 
 
-class _LifecycleComponent(Component):
+class LifecycleHelperComponent(Component):
     def __init__(self, events, label):
         self._events = events
         self._label = label
@@ -30,8 +30,8 @@ def test_register_replaces_component_with_teardown():
     events = []
     registry = ComponentRegistry()
 
-    registry.register("step", _LifecycleComponent(events, "old"))
-    registry.register("step", _LifecycleComponent(events, "new"))
+    registry.register("step", LifecycleHelperComponent(events, "old"))
+    registry.register("step", LifecycleHelperComponent(events, "new"))
     assert registry.deregister("step") is True
 
     assert events == ["old-setup", "old-teardown", "new-setup", "new-teardown"]
@@ -70,6 +70,7 @@ def test_missing_variables_fail_run_instead_of_being_silently_dropped():
     result = results[0]
     assert result.status is RunStatus.FAILED
     assert result.error is not None
+    assert "KeyError" in result.error
     assert "Variable 'missing' not found in registry" in result.error
     assert result.outputs[0].component == "__engine__"
     assert result.outputs[0].success is False
