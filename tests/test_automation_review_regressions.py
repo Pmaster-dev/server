@@ -37,7 +37,8 @@ def test_register_replaces_component_with_teardown():
 
 
 def test_function_component_returns_traceback_on_failure():
-    def broken(_input):
+    def broken(input_):
+        del input_
         raise RuntimeError("boom")
 
     output = FunctionComponent(broken, name="broken").execute(
