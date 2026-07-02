@@ -24,6 +24,7 @@ resource "aws_route53_zone" "vr4deaf" {
 # Root A record  (replace values with real IP(s) from Google export)
 # ---------------------------------------------------------------------------
 resource "aws_route53_record" "root_a" {
+  count   = length(var.root_ipv4_addresses) > 0 ? 1 : 0
   zone_id = aws_route53_zone.vr4deaf.zone_id
   name    = var.domain
   type    = "A"
@@ -44,9 +45,25 @@ resource "aws_route53_record" "root_aaaa" {
 }
 
 # ---------------------------------------------------------------------------
-# www CNAME
+# www – alias to apex when www_target equals the domain, CNAME otherwise.
+# A CNAME cannot point to an apex domain (RFC 1034), so we use an alias
+# record in that case.
 # ---------------------------------------------------------------------------
-resource "aws_route53_record" "www" {
+resource "aws_route53_record" "www_alias" {
+  count   = var.www_target == var.domain ? 1 : 0
+  zone_id = aws_route53_zone.vr4deaf.zone_id
+  name    = "www.${var.domain}"
+  type    = "A"
+
+  alias {
+    name                   = var.domain
+    zone_id                = aws_route53_zone.vr4deaf.zone_id
+    evaluate_target_health = false
+  }
+}
+
+resource "aws_route53_record" "www_cname" {
+  count   = var.www_target != var.domain && var.www_target != "" ? 1 : 0
   zone_id = aws_route53_zone.vr4deaf.zone_id
   name    = "www.${var.domain}"
   type    = "CNAME"
@@ -90,6 +107,6 @@ resource "aws_route53_record" "subdomain" {
   zone_id = aws_route53_zone.vr4deaf.zone_id
   name    = "${each.key}.${var.domain}"
   type    = each.value.type
-  ttl     = lookup(each.value, "ttl", var.ttl)
+  ttl     = coalesce(each.value.ttl, var.ttl)
   records = each.value.records
 }

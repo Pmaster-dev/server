@@ -1,3 +1,9 @@
+variable "aws_region" {
+  description = "AWS region for the provider (Route53 is global but a region is still required)."
+  type        = string
+  default     = "us-east-1"
+}
+
 variable "domain" {
   description = "Apex domain managed by this hosted zone."
   type        = string

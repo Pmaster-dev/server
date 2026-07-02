@@ -1,7 +1,5 @@
-variable "aws_region" {
-  description = "AWS region for the provider (Route53 is global but a region is still required)."
-  type        = string
-  default     = "us-east-1"
+provider "aws" {
+  region = var.aws_region
 }
 
 # ── Example tfvars to fill in after Google DNS export ─────────────────────
