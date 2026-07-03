@@ -1,0 +1,50 @@
+# Python
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+*.egg
+*.egg-info/
+dist/
+build/
+.eggs/
+*.whl
+.venv/
+venv/
+env/
+.env
+pip-log.txt
+pip-delete-this-directory.txt
+
+# Type checking
+.pyre/
+.mypy_cache/
+.pytype/
+.pyre_results.sarif
+pyre-results.sarif
+
+# Testing
+.pytest_cache/
+.coverage
+htmlcov/
+.tox/
+
+# IDE / OS
+.idea/
+.vscode/
+*.swp
+*.swo
+.DS_Store
+Thumbs.db
+
+# PHP
+vendor/
+
+# Docs / Jekyll
+docs/_site/
+docs/.jekyll-cache/
+docs/.jekyll-metadata
+
+# Misc
+*.log
+*.tmp

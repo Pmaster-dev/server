@@ -1,63 +1,59 @@
 # Pmaster-dev / server
 
-Infrastructure and automation layer for the **Pmaster-dev** + **pinkycollie** ecosystem.
+[![Pyre](https://github.com/Pmaster-dev/server/actions/workflows/pyre.yml/badge.svg)](https://github.com/Pmaster-dev/server/actions/workflows/pyre.yml)
+[![CI](https://github.com/Pmaster-dev/server/actions/workflows/ci.yml/badge.svg)](https://github.com/Pmaster-dev/server/actions/workflows/ci.yml)
+[![Pages](https://github.com/Pmaster-dev/server/actions/workflows/pages.yml/badge.svg)](https://github.com/Pmaster-dev/server/actions/workflows/pages.yml)
 
-## What's in here
+Infrastructure and automation layer for the **Pmaster-dev / pinkycollie** ecosystem. Provides a serverless Python automation engine, shared OpenAPI contracts, and auth utilities consumed by downstream services.
 
-| Path | Description |
-|---|---|
-| `src/automation/` | Serverless Python automation engine (components, variables, event dispatch) |
-| `docs/openapi/automation.yaml` | OpenAPI 3.1 contract for the Automation REST API |
-| `docs/pinkycollie-ecosystem-inventory.md` | Cross-org architecture map |
-| `auth/` | Auth utilities |
-| `types/` | Shared type definitions |
-| `spec/` | Specs and helpers |
+📖 **Documentation →** [pmaster-dev.github.io/server](https://pmaster-dev.github.io/server)
+
+---
+
+## Repository layout
+
+```
+server/
+├── src/
+│   ├── automation/       # Core automation engine (Python package)
+│   └── handoff/          # Handoff coordination module
+├── auth/
+│   └── utils.py          # JWT, bcrypt, session helpers
+├── docs/                 # GitHub Pages documentation source
+│   ├── openapi/          # Machine-readable OpenAPI contracts
+│   ├── api/              # Human-readable API reference
+│   └── guides/           # Getting-started guides
+└── .github/
+    └── workflows/        # CI, Pyre type-check, Pages deploy
+```
 
 ## Quick start
 
-```python
+```bash
+# Install Python dependencies
+pip install -r requirements.txt
+
+# Use the automation engine
+PYTHONPATH=src python - <<'EOF'
 from automation import AutomationEngine, AutomationDefinition
 
 engine = AutomationEngine()
-
-# Register a component
 engine.register_fn("greet", lambda inp: f"Hello, {inp.payload}!")
-
-# Define an automation
-engine.define(AutomationDefinition(
-    name="greet_on_request",
-    triggers=["user.request"],
-    steps=["greet"],
-))
-
-# Fire an event
+engine.define(AutomationDefinition(name="hello", triggers=["user.request"], steps=["greet"]))
 results = engine.trigger_type("user.request", payload="world")
-print(results[0].status)   # RunStatus.SUCCESS
+print(results[0].status)  # RunStatus.SUCCESS
+EOF
 ```
 
-Run with the `src` layout on `PYTHONPATH`:
+## Documentation
 
-```bash
-PYTHONPATH=src python your_script.py
-```
-
-## Automation API
-
-The REST contract lives at [`docs/openapi/automation.yaml`](docs/openapi/automation.yaml).
-
-Key endpoints:
-
-| Method | Path | Description |
-|---|---|---|
-| `POST` | `/automation/events/trigger` | Trigger automation runs for an event |
-| `GET` | `/automation/definitions` | List automation definitions |
-| `PUT` | `/automation/definitions/{name}` | Create or replace a definition |
-| `DELETE` | `/automation/definitions/{name}` | Remove a definition |
-| `POST` | `/automation/definitions/{name}/enable` | Enable a definition |
-| `POST` | `/automation/definitions/{name}/disable` | Disable a definition |
-| `GET` | `/automation/runs` | List run history |
-| `GET` | `/automation/stats` | Get aggregate run statistics |
+Full API reference and guides are published on [GitHub Pages](https://pmaster-dev.github.io/server).  
+OpenAPI contract: [`docs/openapi/automation.yaml`](docs/openapi/automation.yaml)
 
 ## Ecosystem
 
-This repo is the infrastructure layer of a two-org ecosystem. See [`docs/pinkycollie-ecosystem-inventory.md`](docs/pinkycollie-ecosystem-inventory.md) for the full cross-org architecture.
+See [`docs/pinkycollie-ecosystem-inventory.md`](docs/pinkycollie-ecosystem-inventory.md) for the full cross-org architecture map.
+
+## License
+
+MIT
