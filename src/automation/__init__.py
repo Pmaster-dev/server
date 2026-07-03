@@ -48,6 +48,12 @@ from .variables import (
     GeneratorVariable,
     VariableRegistry,
 )
+from .server_foundation import (
+    ServerMeshEngine,
+    ServerNavigation,
+    ServerNode,
+    ServerProtocol,
+)
 
 __all__ = [
     # Engine
@@ -67,4 +73,9 @@ __all__ = [
     # Variables
     "GeneratorVariable",
     "VariableRegistry",
+    # Server foundation
+    "ServerMeshEngine",
+    "ServerNavigation",
+    "ServerNode",
+    "ServerProtocol",
 ]
