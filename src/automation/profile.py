@@ -214,7 +214,7 @@ class CapabilityProfile:
         return errors
 
     # ------------------------------------------------------------------
-    # Serialisation
+    # Serialization
     # ------------------------------------------------------------------
 
     def to_dict(self) -> Dict[str, Any]:

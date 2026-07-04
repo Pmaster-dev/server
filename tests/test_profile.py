@@ -57,7 +57,7 @@ class TestMotionStabilityValidation:
         errors = MotionStability(min_fps=60, max_latency_ms=1000 / 60).validate()
         assert errors == []
 
-    def test_roundtrip_serialisation(self):
+    def test_roundtrip_serialization(self):
         ms = MotionStability(min_fps=30, max_latency_ms=80, jitter_budget_ms=8)
         assert MotionStability.from_dict(ms.to_dict()) == ms
 
@@ -74,7 +74,7 @@ class TestAccessibilityFlags:
         assert af.high_contrast is False
         assert af.reduced_motion is False
 
-    def test_roundtrip_serialisation(self):
+    def test_roundtrip_serialization(self):
         af = AccessibilityFlags(
             sign_language_overlay=True,
             visual_video_enabled=False,
@@ -165,7 +165,7 @@ class TestCapabilityProfileHelpers:
         )
         assert profile.is_motion_constrained is True
 
-    def test_roundtrip_serialisation(self):
+    def test_roundtrip_serialization(self):
         profile = CapabilityProfile(
             name="web-prod",
             target=TargetPlatform.WEB_APP,
