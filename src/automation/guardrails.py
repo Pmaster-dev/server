@@ -8,9 +8,10 @@ record the failure and invoke after-run hooks as normal.
 
 Included guardrails
 -------------------
-* :class:`TextFileGuardrail` – validates payloads that reference ``.txt`` (or
-  other significant text-based) file paths, blocking path-traversal attacks,
-  null bytes, and disallowed file extensions.
+* :class:`TextFileGuardrail` – validates payloads that reference text-based
+  file paths (any extension in :data:`DEFAULT_TEXT_EXTENSIONS`, including
+  ``.txt``, ``.log``, ``.csv``, etc.), blocking path-traversal attacks, null
+  bytes, absolute paths, and disallowed file extensions.
 """
 
 from __future__ import annotations

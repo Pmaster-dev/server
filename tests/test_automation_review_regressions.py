@@ -97,7 +97,7 @@ def test_trigger_before_start_raises_engine_not_started_error():
     engine.register_fn("echo", lambda inp: inp.payload)
     engine.define(AutomationDefinition(name="a", triggers=["x"], steps=["echo"]))
 
-    with pytest.raises(EngineNotStartedError):
+    with pytest.raises(EngineNotStartedError, match="start\\(\\)"):
         engine.trigger_type("x")
 
 
