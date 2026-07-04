@@ -48,6 +48,12 @@ from .variables import (
     GeneratorVariable,
     VariableRegistry,
 )
+from .firetv import (
+    FireTVKey,
+    KEYBOARD_SHORTCUTS,
+    KeyboardShortcutComponent,
+    FireTVADBComponent,
+)
 
 __all__ = [
     # Engine
@@ -67,4 +73,9 @@ __all__ = [
     # Variables
     "GeneratorVariable",
     "VariableRegistry",
+    # Fire TV remote shortcuts
+    "FireTVKey",
+    "KEYBOARD_SHORTCUTS",
+    "KeyboardShortcutComponent",
+    "FireTVADBComponent",
 ]
