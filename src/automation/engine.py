@@ -57,7 +57,10 @@ class RunStatus(Enum):
 
 
 class EngineNotStartedError(RuntimeError):
-    """Raised when :meth:`AutomationEngine.trigger` is called before :meth:`start`."""
+    """
+    Raised when :meth:`AutomationEngine.trigger` or
+    :meth:`AutomationEngine.trigger_type` is called before :meth:`start`.
+    """
 
 
 @dataclass
@@ -195,17 +198,20 @@ class AutomationEngine:
         """
         if not self._running:
             self._running = True
-            logger.info("AutomationEngine started")
+            logger.debug("AutomationEngine started")
         return self
 
     def stop(self) -> "AutomationEngine":
         """
-        Stop the engine and tear down all registered components.
+        Stop the engine and tear down all registered components by deregistering
+        each one from the component registry.
 
         After :meth:`stop` returns, :meth:`trigger` / :meth:`trigger_type`
         will raise :class:`EngineNotStartedError` until :meth:`start` is
-        called again.  All component teardown hooks are invoked; any
-        exceptions they raise are logged and suppressed.
+        called again. Because components are deregistered during teardown, a
+        subsequent :meth:`start` does not restore previously registered
+        components; callers must register them again as needed. Any exceptions
+        raised by teardown are logged and suppressed.
         Returns *self* for chaining.
         """
         if self._running:
