@@ -128,6 +128,20 @@ def test_start_is_idempotent():
     assert engine.is_running is True
 
 
+def test_start_emits_debug_log(caplog):
+    engine = AutomationEngine()
+
+    with caplog.at_level("DEBUG", logger="automation.engine"):
+        engine.start()
+
+    start_logs = [
+        record for record in caplog.records
+        if record.name == "automation.engine" and record.message == "AutomationEngine started"
+    ]
+    assert len(start_logs) == 1
+    assert start_logs[0].levelname == "DEBUG"
+
+
 def test_stop_calls_component_teardown():
     events = []
 
@@ -261,4 +275,3 @@ def test_text_file_guardrail_in_pipeline_passes_valid_payload():
 
 def test_default_text_extensions_contains_txt():
     assert ".txt" in DEFAULT_TEXT_EXTENSIONS
-
