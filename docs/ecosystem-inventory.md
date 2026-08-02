@@ -11,6 +11,22 @@ Maintain `Pmaster-dev` infrastructure repos as the core foundation for an AI-age
 | `360magicians` | `magician-core`, `a2a`, `magician-sdk` | Core AI agent orchestration and Agent-to-Agent protocols |
 | `Pmaster-dev` | `server`, `docs`, `actions`, `electron`, `.github` | Infrastructure/automation layer, reusable tooling, shared contracts |
 
+## Kernel Layer — single source of truth for data
+
+All products are **views into the kernel**.  The kernel lives in `Pmaster-dev/server`.
+
+The kernel defines:
+
+- **11 kernel objects** — Person, Organization, Case, Project, Service, Accommodation, Document, Workflow, Decision, Outcome, Event (see [`docs/architecture/kernel.md`](architecture/kernel.md))
+- **8 core tables** — `users`, `organizations`, `workflows`, `events`, `documents`, `accommodations`, `decisions`, `outcomes`
+- **6 engine capabilities** — Registry, Event Store, Workflow, Decision, Document, Outcome (see [`docs/architecture/engines.md`](architecture/engines.md))
+- **Shared OpenAPI contracts** — [`docs/openapi/kernel.yaml`](openapi/kernel.yaml) imported by all downstream services
+- **Python implementation** — `src/kernel/` package, one module per engine
+
+No product creates its own parallel data model.  If a concept isn't in the kernel, it is proposed here first.
+
+---
+
 ## Layer 1 — single source of truth for templates
 
 - Keep `Pmaster-dev/.github` as the org template hub:
