@@ -32,6 +32,7 @@ Quick-start::
 from .engine import (
     AutomationDefinition,
     AutomationEngine,
+    EngineNotStartedError,
     RunResult,
     RunStatus,
     TriggerEvent,
@@ -49,12 +50,18 @@ from .variables import (
     GeneratorVariable,
     VariableRegistry,
 )
+<<<<<<< HEAD
 from .profile import (
     AccessibilityFlags,
     CapabilityProfile,
     MotionStability,
     TargetPlatform,
     default_profile,
+=======
+from .guardrails import (
+    DEFAULT_TEXT_EXTENSIONS,
+    TextFileGuardrail,
+>>>>>>> origin/develop
 )
 
 __all__ = [
@@ -64,6 +71,7 @@ __all__ = [
     "TriggerEvent",
     "RunResult",
     "RunStatus",
+    "EngineNotStartedError",
     "default_engine",
     "trigger",
     # Components
@@ -75,10 +83,16 @@ __all__ = [
     # Variables
     "GeneratorVariable",
     "VariableRegistry",
+<<<<<<< HEAD
     # Profile
     "CapabilityProfile",
     "MotionStability",
     "AccessibilityFlags",
     "TargetPlatform",
     "default_profile",
+=======
+    # Guardrails
+    "DEFAULT_TEXT_EXTENSIONS",
+    "TextFileGuardrail",
+>>>>>>> origin/develop
 ]

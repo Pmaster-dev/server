@@ -4,7 +4,7 @@
 [![CI](https://github.com/Pmaster-dev/server/actions/workflows/ci.yml/badge.svg)](https://github.com/Pmaster-dev/server/actions/workflows/ci.yml)
 [![Pages](https://github.com/Pmaster-dev/server/actions/workflows/pages.yml/badge.svg)](https://github.com/Pmaster-dev/server/actions/workflows/pages.yml)
 
-Infrastructure and automation layer for the **Pmaster-dev / pinkycollie** ecosystem. Provides a serverless Python automation engine, shared OpenAPI contracts, and auth utilities consumed by downstream services.
+Infrastructure and automation layer for the **Pmaster-dev** core ecosystem. Provides a serverless Python automation engine, shared OpenAPI contracts, and auth utilities consumed by downstream services built on `magician-core`, `a2a`, and the AI SDK.
 
 📖 **Documentation →** [pmaster-dev.github.io/server](https://pmaster-dev.github.io/server)
 
@@ -52,7 +52,7 @@ OpenAPI contract: [`docs/openapi/automation.yaml`](docs/openapi/automation.yaml)
 
 ## Ecosystem
 
-See [`docs/pinkycollie-ecosystem-inventory.md`](docs/pinkycollie-ecosystem-inventory.md) for the full cross-org architecture map.
+See [`docs/ecosystem-inventory.md`](docs/ecosystem-inventory.md) for the full cross-org architecture map.
 
 ## License
 
