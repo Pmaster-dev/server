@@ -2,7 +2,7 @@ provider "aws" {
   region = var.aws_region
 }
 
-# ── Example tfvars to fill in after Google DNS export ─────────────────────
+# ── Example tfvars to fill in after Cloudflare DNS export ─────────────────
 # domain               = "vr4deaf.org"
 # ttl                  = 60   # use 60 during cutover, raise to 300+ after
 #

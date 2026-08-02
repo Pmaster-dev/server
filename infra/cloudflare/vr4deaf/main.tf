@@ -49,8 +49,8 @@ resource "cloudflare_record" "mx" {
   name     = var.domain
   type     = "MX"
   # MX value format: "10 mail.example.com" → split priority from hostname
-  value    = trimspace(regex("\\d+\\s+(.*)", each.value)[0])
-  priority = tonumber(regex("^(\\d+)", each.value)[0])
+  value    = trimspace(regex("\\d+\\s+(.*)", each.value))
+  priority = tonumber(regex("^(\\d+)", each.value))
   proxied  = false # MX records must never be proxied
   ttl      = var.ttl
 }

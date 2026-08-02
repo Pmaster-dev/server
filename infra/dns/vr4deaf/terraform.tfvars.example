@@ -1,0 +1,34 @@
+# Copy this file to terraform.tfvars and fill in real values.
+# NEVER commit terraform.tfvars – it may contain sensitive identifiers.
+
+domain     = "vr4deaf.org"
+aws_region = "us-east-1"
+ttl        = 300  # lower to 60 during cutover, raise back to 300+ after
+
+# --- Vercel apex IP (default matches Vercel's current anycast IP)
+root_ipv4_addresses = ["76.76.21.21"]
+
+# --- www CNAME target (Vercel)
+www_target = "cname.vercel-dns.com"
+
+# --- Mail records (Google Workspace example – replace with your provider)
+mx_records = [
+  "1 aspmx.l.google.com.",
+  "5 alt1.aspmx.l.google.com.",
+  "10 alt2.aspmx.l.google.com.",
+  "10 alt3.aspmx.l.google.com.",
+  "20 alt4.aspmx.l.google.com.",
+]
+
+# --- TXT records (SPF, DKIM, DMARC, site-verification)
+root_txt_records = [
+  "v=spf1 include:_spf.google.com ~all",
+  # "google-site-verification=<token>",
+  # "v=DMARC1; p=none; rua=mailto:dmarc@vr4deaf.org",
+]
+
+# --- Extra subdomains (add as needed)
+subdomain_remaps = [
+  # { name = "app",  type = "CNAME", records = ["cname.vercel-dns.com."],  ttl = null },
+  # { name = "api",  type = "A",     records = ["203.0.113.20"],            ttl = null },
+]

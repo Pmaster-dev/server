@@ -53,7 +53,8 @@ Terraform modules:
 
 ```bash
 cd infra/dns/vr4deaf
-cp provider.tf terraform.tfvars   # use the commented example block as a starter
+cp terraform.tfvars.example terraform.tfvars
+# Edit terraform.tfvars and fill in your values
 ```
 
 Key variables (defaults already set for Vercel):

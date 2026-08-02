@@ -46,8 +46,8 @@ resource "aws_route53_record" "root_aaaa" {
 
 # ---------------------------------------------------------------------------
 # www – alias to apex when www_target equals the domain, CNAME otherwise.
-# A CNAME cannot point to an apex domain (RFC 1034), so we use an alias
-# record in that case.
+# A CNAME record must not exist at the zone apex (RFC 1034), so when
+# www_target equals the apex we use an alias record instead.
 # ---------------------------------------------------------------------------
 resource "aws_route53_record" "www_alias" {
   count   = var.www_target == var.domain ? 1 : 0
