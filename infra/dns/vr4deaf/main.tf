@@ -102,7 +102,7 @@ resource "aws_route53_record" "txt_root" {
 # Subdomain remaps  (one record per entry in var.subdomain_remaps)
 # ---------------------------------------------------------------------------
 resource "aws_route53_record" "subdomain" {
-  for_each = { for s in var.subdomain_remaps : s.name => s }
+  for_each = { for s in var.subdomain_remaps : s.name => s if length(s.records) > 0 }
 
   zone_id = aws_route53_zone.vr4deaf.zone_id
   name    = "${each.key}.${var.domain}"
