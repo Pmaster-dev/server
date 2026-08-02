@@ -419,6 +419,7 @@ class TestEngineProfileIntegration:
         )
 
         engine = AutomationEngine()
+        engine.start()
         engine.register_fn("capture", capture_meta)
         engine.define(
             AutomationDefinition(
