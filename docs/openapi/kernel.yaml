@@ -1,0 +1,317 @@
+openapi: 3.1.0
+info:
+  title: MBTQ Kernel API
+  version: 0.1.0
+  description: >
+    Shared kernel resource contracts for the MBTQ Business OS.
+    Downstream services (magician-core, a2a, magician-sdk) import these
+    schemas as a single source of truth for the 8 core data types.
+tags:
+  - name: Kernel
+components:
+  schemas:
+
+    # -----------------------------------------------------------------------
+    # 1. User
+    # -----------------------------------------------------------------------
+    User:
+      type: object
+      description: Identity record for any human actor in the system.
+      properties:
+        id:
+          type: string
+          format: uuid
+        display_name:
+          type: string
+        email:
+          type: string
+          format: email
+          nullable: true
+        accessibility:
+          $ref: '#/components/schemas/AccessibilityProfile'
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+      required: [id, display_name, accessibility, created_at, updated_at]
+
+    # -----------------------------------------------------------------------
+    # 2. Organization
+    # -----------------------------------------------------------------------
+    Organization:
+      type: object
+      description: Any institutional actor — employer, agency, vendor, partner.
+      properties:
+        id:
+          type: string
+          format: uuid
+        name:
+          type: string
+        type:
+          type: string
+          enum: [employer, agency, vendor, partner, other]
+        metadata:
+          type: object
+          additionalProperties: true
+          default: {}
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+      required: [id, name, type, created_at, updated_at]
+
+    # -----------------------------------------------------------------------
+    # 3. Workflow
+    # -----------------------------------------------------------------------
+    Workflow:
+      type: object
+      description: A reusable sequence of steps governing how work moves forward.
+      properties:
+        id:
+          type: string
+          format: uuid
+        name:
+          type: string
+        template:
+          type: string
+          description: Reference to the workflow template definition name.
+        state:
+          type: string
+          description: Current execution state of this workflow instance.
+        owner_id:
+          type: string
+          format: uuid
+          nullable: true
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+      required: [id, name, template, state, created_at, updated_at]
+
+    # -----------------------------------------------------------------------
+    # 4. Event
+    # -----------------------------------------------------------------------
+    Event:
+      type: object
+      description: >
+        An immutable fact that something happened.
+        Events are append-only; nothing is deleted.
+      properties:
+        id:
+          type: string
+          format: uuid
+        event_type:
+          type: string
+        actor_id:
+          type: string
+          format: uuid
+          nullable: true
+        subject_type:
+          type: string
+          nullable: true
+        subject_id:
+          type: string
+          format: uuid
+          nullable: true
+        payload:
+          type: object
+          additionalProperties: true
+          nullable: true
+        occurred_at:
+          type: string
+          format: date-time
+      required: [id, event_type, occurred_at]
+
+    # -----------------------------------------------------------------------
+    # 5. Document
+    # -----------------------------------------------------------------------
+    Document:
+      type: object
+      description: Any file, form, report, or artifact produced or consumed by the system.
+      properties:
+        id:
+          type: string
+          format: uuid
+        title:
+          type: string
+        document_type:
+          type: string
+        storage_ref:
+          type: string
+          description: URI or key pointing to the stored document content.
+        version:
+          type: integer
+          minimum: 1
+          default: 1
+        owner_id:
+          type: string
+          format: uuid
+          nullable: true
+        metadata:
+          type: object
+          additionalProperties: true
+          default: {}
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+      required: [id, title, document_type, storage_ref, version, created_at, updated_at]
+
+    # -----------------------------------------------------------------------
+    # 6. Accommodation
+    # -----------------------------------------------------------------------
+    Accommodation:
+      type: object
+      description: A per-user accessibility or reasonable-accommodation record.
+      properties:
+        id:
+          type: string
+          format: uuid
+        user_id:
+          type: string
+          format: uuid
+        accommodation_type:
+          type: string
+          description: e.g. "sign-language-interpreter", "captioning", "extended-time"
+        status:
+          type: string
+          enum: [requested, approved, active, expired, denied]
+        effective_date:
+          type: string
+          format: date
+          nullable: true
+        expiry_date:
+          type: string
+          format: date
+          nullable: true
+        notes:
+          type: string
+          default: ''
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+      required: [id, user_id, accommodation_type, status, created_at, updated_at]
+
+    # -----------------------------------------------------------------------
+    # 7. Decision
+    # -----------------------------------------------------------------------
+    Decision:
+      type: object
+      description: A recorded choice made by a person, agent, or policy rule.
+      properties:
+        id:
+          type: string
+          format: uuid
+        decision_type:
+          type: string
+        actor_id:
+          type: string
+          format: uuid
+          nullable: true
+          description: User or system agent that made the decision.
+        subject_type:
+          type: string
+          nullable: true
+        subject_id:
+          type: string
+          format: uuid
+          nullable: true
+        choice:
+          type: string
+          description: The selected option or resolved value.
+        rationale:
+          type: string
+          default: ''
+        policy_version:
+          type: string
+          nullable: true
+        decided_at:
+          type: string
+          format: date-time
+      required: [id, decision_type, choice, decided_at]
+
+    # -----------------------------------------------------------------------
+    # 8. Outcome
+    # -----------------------------------------------------------------------
+    Outcome:
+      type: object
+      description: A measurable result tied to a Case, Project, or Workflow.
+      properties:
+        id:
+          type: string
+          format: uuid
+        outcome_type:
+          type: string
+        subject_type:
+          type: string
+          description: e.g. "case", "project", "workflow"
+        subject_id:
+          type: string
+          format: uuid
+        status:
+          type: string
+          enum: [pending, achieved, partial, missed]
+        value:
+          description: Measured result; type depends on outcome_type.
+          nullable: true
+        baseline:
+          description: Expected or target value for comparison.
+          nullable: true
+        measured_at:
+          type: string
+          format: date-time
+          nullable: true
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+      required: [id, outcome_type, subject_type, subject_id, status, created_at, updated_at]
+
+    # -----------------------------------------------------------------------
+    # Accessibility profile (embedded in User)
+    # -----------------------------------------------------------------------
+    AccessibilityProfile:
+      type: object
+      description: >
+        Accessibility preferences attached to a User.
+        Every engine reads this profile before acting.
+      properties:
+        preferred_language:
+          type: string
+          description: e.g. "ASL", "en", "es"
+          default: 'en'
+        communication_mode:
+          type: string
+          enum: [text, video, audio, in-person]
+          default: 'text'
+        captions_required:
+          type: boolean
+          default: false
+        screen_reader:
+          type: boolean
+          default: false
+        preferred_format:
+          type: string
+          enum: [plain-text, html, pdf, braille]
+          default: 'plain-text'
+        extended_time:
+          type: boolean
+          default: false
+        notes:
+          type: string
+          default: ''
+      required: [preferred_language, communication_mode, captions_required,
+                 screen_reader, preferred_format, extended_time]

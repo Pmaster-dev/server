@@ -56,6 +56,13 @@ class RunStatus(Enum):
     SKIPPED = "skipped"
 
 
+class EngineNotStartedError(RuntimeError):
+    """
+    Raised when :meth:`AutomationEngine.trigger` or
+    :meth:`AutomationEngine.trigger_type` is called before :meth:`start`.
+    """
+
+
 @dataclass
 class TriggerEvent:
     """Represents an event that can trigger an automation run."""
@@ -171,10 +178,56 @@ class AutomationEngine:
 
         self._automations: Dict[str, AutomationDefinition] = {}
         self._history: List[RunResult] = []
+        self._running: bool = False
 
         # Middleware hooks: callables invoked before/after each run
         self._before_run: List[Callable[[RunResult, TriggerEvent], None]] = []
         self._after_run: List[Callable[[RunResult], None]] = []
+
+    # ------------------------------------------------------------------
+    # Lifecycle: start / stop
+    # ------------------------------------------------------------------
+
+    def start(self) -> "AutomationEngine":
+        """
+        Start the engine, allowing automation runs.
+
+        Must be called before :meth:`trigger` / :meth:`trigger_type`.
+        Calling :meth:`start` on an already-running engine is a no-op.
+        Returns *self* for chaining.
+        """
+        if not self._running:
+            self._running = True
+            logger.debug("AutomationEngine started")
+        return self
+
+    def stop(self) -> "AutomationEngine":
+        """
+        Stop the engine and tear down all registered components by deregistering
+        each one from the component registry.
+
+        After :meth:`stop` returns, :meth:`trigger` / :meth:`trigger_type`
+        will raise :class:`EngineNotStartedError` until :meth:`start` is
+        called again. Because components are deregistered during teardown, a
+        subsequent :meth:`start` does not restore previously registered
+        components; callers must register them again as needed. Any exceptions
+        raised by teardown are logged and suppressed.
+        Returns *self* for chaining.
+        """
+        if self._running:
+            self._running = False
+            for name in list(self.components.names()):
+                try:
+                    self.components.deregister(name)
+                except Exception:
+                    logger.exception("teardown of component %r raised an exception", name)
+            logger.info("AutomationEngine stopped")
+        return self
+
+    @property
+    def is_running(self) -> bool:
+        """``True`` while the engine is between :meth:`start` and :meth:`stop`."""
+        return self._running
 
     # ------------------------------------------------------------------
     # Component & variable shortcuts
@@ -247,9 +300,19 @@ class AutomationEngine:
         """
         Dispatch *event* to all matching, enabled automations.
 
+        Raises:
+            EngineNotStartedError: if the engine has not been started via
+                :meth:`start`.
+
         Returns the list of :class:`RunResult` objects produced (one per
         matching automation).
         """
+        if not self._running:
+            raise EngineNotStartedError(
+                "AutomationEngine must be started before triggering events. "
+                "Call engine.start() first."
+            )
+
         results: List[RunResult] = []
 
         for automation in self._automations.values():
@@ -391,7 +454,10 @@ class AutomationEngine:
 # ---------------------------------------------------------------------------
 
 #: Default engine instance – use this for simple single-engine setups.
+#: Pre-started for convenience; create a fresh :class:`AutomationEngine` and
+#: call :meth:`~AutomationEngine.start` explicitly for production use.
 default_engine = AutomationEngine()
+default_engine.start()
 
 
 def trigger(event_type: str, payload: Any = None, **metadata: Any) -> List[RunResult]:

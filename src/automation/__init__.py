@@ -31,6 +31,7 @@ Quick-start::
 from .engine import (
     AutomationDefinition,
     AutomationEngine,
+    EngineNotStartedError,
     RunResult,
     RunStatus,
     TriggerEvent,
@@ -48,6 +49,10 @@ from .variables import (
     GeneratorVariable,
     VariableRegistry,
 )
+from .guardrails import (
+    DEFAULT_TEXT_EXTENSIONS,
+    TextFileGuardrail,
+)
 
 __all__ = [
     # Engine
@@ -56,6 +61,7 @@ __all__ = [
     "TriggerEvent",
     "RunResult",
     "RunStatus",
+    "EngineNotStartedError",
     "default_engine",
     "trigger",
     # Components
@@ -67,4 +73,7 @@ __all__ = [
     # Variables
     "GeneratorVariable",
     "VariableRegistry",
+    # Guardrails
+    "DEFAULT_TEXT_EXTENSIONS",
+    "TextFileGuardrail",
 ]
