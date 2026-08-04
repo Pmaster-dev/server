@@ -39,6 +39,7 @@ from .components import (
     ComponentRegistry,
     FunctionComponent,
 )
+from .profile import CapabilityProfile
 from .variables import GeneratorVariable, VariableRegistry
 
 logger = logging.getLogger(__name__)
@@ -132,6 +133,10 @@ class AutomationDefinition:
     * An ordered list of *steps*: component names executed in sequence.
     * Optional *variables*: names from the :class:`VariableRegistry` that are
       injected into each step's ``metadata`` before execution.
+    * Optional *profile*: a :class:`~automation.profile.CapabilityProfile`
+      that carries platform, motion-stability, and accessibility constraints
+      end-to-end through the pipeline.  When ``None`` the engine falls back
+      to the active profile from :func:`config.get_profile`.
     """
     name: str
     triggers: List[str]
@@ -139,6 +144,7 @@ class AutomationDefinition:
     variables: List[str] = field(default_factory=list)
     description: str = ""
     enabled: bool = True
+    profile: Optional[CapabilityProfile] = field(default=None, compare=False)
 
 
 # ---------------------------------------------------------------------------
@@ -357,8 +363,21 @@ class AutomationEngine:
             # Build variable snapshot for this run
             var_snapshot = self._snapshot_variables(automation.variables)
 
-            # Merge event metadata with variable snapshot
+            # Resolve the capability profile for this run:
+            # prefer the definition-level profile, then fall back to the
+            # module-level server config.
+            run_profile = automation.profile
+            if run_profile is None:
+                try:
+                    from config import get_profile  # noqa: PLC0415
+                    run_profile = get_profile()
+                except Exception:
+                    run_profile = None
+
+            # Merge event metadata with variable snapshot and profile
             run_meta: Dict[str, Any] = {**event.metadata, "variables": var_snapshot}
+            if run_profile is not None:
+                run_meta["profile"] = run_profile.to_dict()
 
             # Execute the component pipeline
             outputs = self.components.run_pipeline(

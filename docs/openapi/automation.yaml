@@ -1,7 +1,7 @@
 openapi: 3.1.0
 info:
   title: Pmaster Automation API
-  version: 0.1.0
+  version: 0.2.0
   description: Shared automation contracts for the Pmaster-dev and pinkycollie ecosystem.
 servers:
   - url: /
@@ -9,7 +9,20 @@ servers:
 tags:
   - name: Automation
   - name: Runs
+  - name: Config
 paths:
+  /config/profile:
+    get:
+      tags: [Config]
+      summary: Return the active capability profile
+      operationId: getCapabilityProfile
+      responses:
+        '200':
+          description: Active capability profile
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CapabilityProfile'
   /automation/events/trigger:
     post:
       tags: [Automation]
@@ -147,6 +160,87 @@ components:
       schema:
         type: string
   schemas:
+    # ------------------------------------------------------------------
+    # Capability profile
+    # ------------------------------------------------------------------
+    TargetPlatform:
+      type: string
+      enum: [cli, ide, web_app, os_frame, embedded]
+      description: >
+        Deployment target platform.  Each value maps to a built-in default
+        CapabilityProfile and a dedicated PlatformAdapter.
+    MotionStability:
+      type: object
+      description: >
+        Frame-rate and latency constraints for visual/video/sign-language
+        pipelines.  Zero values mean "no constraint".
+      properties:
+        min_fps:
+          type: number
+          minimum: 0
+          default: 0
+          description: Minimum acceptable frames per second.
+        max_latency_ms:
+          type: number
+          minimum: 0
+          default: 0
+          description: Maximum end-to-end latency in milliseconds.
+        jitter_budget_ms:
+          type: number
+          minimum: 0
+          default: 0
+          description: Maximum frame-to-frame timing variance in milliseconds.
+      required: [min_fps, max_latency_ms, jitter_budget_ms]
+    AccessibilityFlags:
+      type: object
+      description: Feature switches for accessibility and sign-language pipelines.
+      properties:
+        sign_language_overlay:
+          type: boolean
+          default: false
+          description: Enable sign-language overlay rendering in video/visual outputs.
+        visual_video_enabled:
+          type: boolean
+          default: true
+          description: Allow visual video output.
+        high_contrast:
+          type: boolean
+          default: false
+          description: Request high-contrast colour palettes.
+        reduced_motion:
+          type: boolean
+          default: false
+          description: Suppress or minimise animated transitions.
+      required: [sign_language_overlay, visual_video_enabled, high_contrast, reduced_motion]
+    CapabilityProfile:
+      type: object
+      description: >
+        Unified capability contract for a server deployment target.  A single
+        profile is the authoritative source for platform, motion-stability, and
+        accessibility settings consumed by every module and downstream service.
+      properties:
+        name:
+          type: string
+          description: Human-readable profile identifier (e.g. "prod-web").
+        version:
+          type: string
+          default: "1.0.0"
+          description: Semantic version of the profile schema.
+        target:
+          $ref: '#/components/schemas/TargetPlatform'
+        motion_stability:
+          $ref: '#/components/schemas/MotionStability'
+        accessibility:
+          $ref: '#/components/schemas/AccessibilityFlags'
+        custom:
+          type: object
+          additionalProperties: true
+          default: {}
+          description: Free-form extension dict for project-specific keys.
+      required: [name, target]
+    # ------------------------------------------------------------------
+    # Trigger & automation
+    # ------------------------------------------------------------------
     TriggerEventRequest:
       type: object
       properties:
@@ -188,6 +282,13 @@ components:
         enabled:
           type: boolean
           default: true
+        profile:
+          $ref: '#/components/schemas/CapabilityProfile'
+          nullable: true
+          description: >
+            Optional capability profile for this automation.  When absent the
+            engine uses the active server-level profile from
+            GET /config/profile.
       required: [name, triggers, steps]
     RunStatus:
       type: string

@@ -11,6 +11,7 @@ plugins:
 header_pages:
   - index.md
   - guides/getting-started.md
+  - guides/configuration.md
   - api/automation.md
 
 # Markdown

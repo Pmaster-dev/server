@@ -6,6 +6,7 @@ Quick-start::
     from automation import AutomationEngine, AutomationDefinition, TriggerEvent
     from automation import Component, ComponentInput, ComponentRegistry
     from automation import GeneratorVariable, VariableRegistry
+    from automation import CapabilityProfile, TargetPlatform
 
     engine = AutomationEngine()
 
@@ -49,6 +50,13 @@ from .variables import (
     GeneratorVariable,
     VariableRegistry,
 )
+from .profile import (
+    AccessibilityFlags,
+    CapabilityProfile,
+    MotionStability,
+    TargetPlatform,
+    default_profile,
+)
 from .guardrails import (
     DEFAULT_TEXT_EXTENSIONS,
     TextFileGuardrail,
@@ -73,6 +81,12 @@ __all__ = [
     # Variables
     "GeneratorVariable",
     "VariableRegistry",
+    # Profile
+    "CapabilityProfile",
+    "MotionStability",
+    "AccessibilityFlags",
+    "TargetPlatform",
+    "default_profile",
     # Guardrails
     "DEFAULT_TEXT_EXTENSIONS",
     "TextFileGuardrail",
