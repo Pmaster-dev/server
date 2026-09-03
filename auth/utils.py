@@ -128,8 +128,8 @@ def login_required(f):
             g.user_id = user_id
             g.user = user_data
             return f(*args, **kwargs)
-        except Exception as e:
-            return jsonify({'error': 'Unauthorized', 'details': str(e)}), 401
+        except Exception:
+            return jsonify({'error': 'Unauthorized'}), 401
     return decorated_function
 
 
