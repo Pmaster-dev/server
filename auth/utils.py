@@ -1,14 +1,17 @@
-import bcrypt
-import jwt
+import logging
 import os
 import secrets
 from datetime import datetime, timedelta
 from functools import wraps
-from flask import request, jsonify, g
+from typing import Optional, Tuple
+import bcrypt
+import jwt
+from flask import g, jsonify, request
 from flask_jwt_extended import get_jwt_identity, verify_jwt_in_request
 from cache_db.redis_client import redis_client
 from cache_db.models import User, RefreshToken
-from typing import Tuple, Optional
+
+logger = logging.getLogger(__name__)
 
 
 class PasswordUtils:
@@ -115,7 +118,7 @@ def login_required(f):
         try:
             verify_jwt_in_request()
             user_id = get_jwt_identity()
-            
+
             # Try to get user from cache first
             user_data = redis_client.get_cached_user(user_id)
             if not user_data:
@@ -124,12 +127,14 @@ def login_required(f):
                     return jsonify({'error': 'User not found or inactive'}), 401
                 user_data = user.to_dict()
                 redis_client.cache_user(user_id, user_data)
-            
+
             g.user_id = user_id
             g.user = user_data
             return f(*args, **kwargs)
         except Exception as e:
-            return jsonify({'error': 'Unauthorized', 'details': str(e)}), 401
+            # SECURITY: Do not leak exception details or internal stack traces to clients.
+            logger.warning("Authentication failed: %s", e)
+            return jsonify({'error': 'Unauthorized'}), 401
     return decorated_function
 
 
