@@ -35,8 +35,16 @@ class JWTUtils:
     """JWT token utilities"""
     
     @staticmethod
+    def _get_secret_key() -> str:
+        secret = os.getenv('JWT_SECRET_KEY')
+        if not secret:
+            raise ValueError("JWT_SECRET_KEY environment variable is not set")
+        return secret
+
+    @staticmethod
     def create_tokens(user_id: str, username: str) -> Tuple[str, str]:
         """Create access and refresh tokens"""
+        secret_key = JWTUtils._get_secret_key()
         access_token = jwt.encode(
             {
                 'user_id': user_id,
@@ -44,7 +52,7 @@ class JWTUtils:
                 'exp': datetime.utcnow() + timedelta(hours=1),
                 'type': 'access'
             },
-            os.getenv('JWT_SECRET_KEY', 'jwt-secret'),
+            secret_key,
             algorithm='HS256'
         )
         
@@ -55,7 +63,7 @@ class JWTUtils:
                 'exp': datetime.utcnow() + timedelta(days=30),
                 'type': 'refresh'
             },
-            os.getenv('JWT_SECRET_KEY', 'jwt-secret'),
+            secret_key,
             algorithm='HS256'
         )
         
@@ -65,9 +73,10 @@ class JWTUtils:
     def decode_token(token: str) -> Optional[dict]:
         """Decode and verify token"""
         try:
+            secret_key = JWTUtils._get_secret_key()
             payload = jwt.decode(
                 token,
-                os.getenv('JWT_SECRET_KEY', 'jwt-secret'),
+                secret_key,
                 algorithms=['HS256']
             )
             return payload
