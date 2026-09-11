@@ -115,7 +115,7 @@ def login_required(f):
         try:
             verify_jwt_in_request()
             user_id = get_jwt_identity()
-            
+
             # Try to get user from cache first
             user_data = redis_client.get_cached_user(user_id)
             if not user_data:
@@ -124,12 +124,17 @@ def login_required(f):
                     return jsonify({'error': 'User not found or inactive'}), 401
                 user_data = user.to_dict()
                 redis_client.cache_user(user_id, user_data)
-            
+
+            # Security: Always verify active status, including for cached records
+            if not user_data.get('is_active', False):
+                return jsonify({'error': 'User not found or inactive'}), 401
+
             g.user_id = user_id
             g.user = user_data
             return f(*args, **kwargs)
-        except Exception as e:
-            return jsonify({'error': 'Unauthorized', 'details': str(e)}), 401
+        except Exception:
+            # Security: Do not expose internal exception details to clients
+            return jsonify({'error': 'Unauthorized'}), 401
     return decorated_function
 
 
