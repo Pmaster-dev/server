@@ -1,5 +1,6 @@
 import bcrypt
 import jwt
+import logging
 import os
 import secrets
 from datetime import datetime, timedelta
@@ -9,6 +10,8 @@ from flask_jwt_extended import get_jwt_identity, verify_jwt_in_request
 from cache_db.redis_client import redis_client
 from cache_db.models import User, RefreshToken
 from typing import Tuple, Optional
+
+logger = logging.getLogger(__name__)
 
 
 class PasswordUtils:
@@ -129,7 +132,8 @@ def login_required(f):
             g.user = user_data
             return f(*args, **kwargs)
         except Exception as e:
-            return jsonify({'error': 'Unauthorized', 'details': str(e)}), 401
+            logger.warning("Authentication failed: %s", e)
+            return jsonify({'error': 'Unauthorized'}), 401
     return decorated_function
 
 
