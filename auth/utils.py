@@ -1,14 +1,16 @@
-import bcrypt
-import jwt
 import os
 import secrets
+import logging
 from datetime import datetime, timedelta
 from functools import wraps
+from typing import Tuple, Optional
+
+import bcrypt
+import jwt
 from flask import request, jsonify, g
 from flask_jwt_extended import get_jwt_identity, verify_jwt_in_request
 from cache_db.redis_client import redis_client
-from cache_db.models import User, RefreshToken
-from typing import Tuple, Optional
+from cache_db.models import User
 
 
 class PasswordUtils:
@@ -129,7 +131,9 @@ def login_required(f):
             g.user = user_data
             return f(*args, **kwargs)
         except Exception as e:
-            return jsonify({'error': 'Unauthorized', 'details': str(e)}), 401
+            # Log internal exception details instead of exposing details to clients
+            logging.error("Authentication check failed: %s", e)
+            return jsonify({'error': 'Unauthorized'}), 401
     return decorated_function
 
 
