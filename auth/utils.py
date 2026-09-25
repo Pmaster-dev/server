@@ -1,5 +1,6 @@
 import bcrypt
 import jwt
+import logging
 import os
 import secrets
 from datetime import datetime, timedelta
@@ -129,7 +130,8 @@ def login_required(f):
             g.user = user_data
             return f(*args, **kwargs)
         except Exception as e:
-            return jsonify({'error': 'Unauthorized', 'details': str(e)}), 401
+            logging.error("Unauthorized request: %s", e)
+            return jsonify({'error': 'Unauthorized'}), 401
     return decorated_function
 
 
