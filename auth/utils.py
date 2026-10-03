@@ -33,10 +33,18 @@ class PasswordUtils:
 
 class JWTUtils:
     """JWT token utilities"""
+
+    @staticmethod
+    def _get_secret_key() -> str:
+        secret = os.getenv('JWT_SECRET_KEY')
+        if not secret:
+            raise RuntimeError("JWT_SECRET_KEY environment variable is not configured")
+        return secret
     
     @staticmethod
     def create_tokens(user_id: str, username: str) -> Tuple[str, str]:
         """Create access and refresh tokens"""
+        secret = JWTUtils._get_secret_key()
         access_token = jwt.encode(
             {
                 'user_id': user_id,
@@ -44,7 +52,7 @@ class JWTUtils:
                 'exp': datetime.utcnow() + timedelta(hours=1),
                 'type': 'access'
             },
-            os.getenv('JWT_SECRET_KEY', 'jwt-secret'),
+            secret,
             algorithm='HS256'
         )
         
@@ -55,7 +63,7 @@ class JWTUtils:
                 'exp': datetime.utcnow() + timedelta(days=30),
                 'type': 'refresh'
             },
-            os.getenv('JWT_SECRET_KEY', 'jwt-secret'),
+            secret,
             algorithm='HS256'
         )
         
@@ -67,7 +75,7 @@ class JWTUtils:
         try:
             payload = jwt.decode(
                 token,
-                os.getenv('JWT_SECRET_KEY', 'jwt-secret'),
+                JWTUtils._get_secret_key(),
                 algorithms=['HS256']
             )
             return payload
@@ -128,8 +136,8 @@ def login_required(f):
             g.user_id = user_id
             g.user = user_data
             return f(*args, **kwargs)
-        except Exception as e:
-            return jsonify({'error': 'Unauthorized', 'details': str(e)}), 401
+        except Exception:
+            return jsonify({'error': 'Unauthorized'}), 401
     return decorated_function
 
 
